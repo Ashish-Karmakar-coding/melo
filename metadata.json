@@ -1,0 +1,5 @@
+{
+  "name": "Melodify - Premium Music Streamer",
+  "description": "A high-end, Spotify-inspired music streaming application featuring playlist management, JSON import/export, and a butter-smooth glassmorphic UI.",
+  "requestFramePermissions": []
+}
