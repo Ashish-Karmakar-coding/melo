@@ -25,18 +25,97 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', album: '' });
+  const [urlError, setUrlError] = useState('');
+
+  // Generate gradient placeholder based on seed string
+  const generateGradientUrl = (seed: string): string => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    const color1 = `hsl(${hue}, 70%, 50%)`;
+    const color2 = `hsl(${(hue + 60) % 360}, 70%, 40%)`;
+    const gradId = `grad-${Math.abs(hash)}`;
+    
+    const svg = `
+      <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${color1};stop-opacity:1" />
+            <stop offset="100%" style="stop-color:${color2};stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="400" height="400" fill="url(#${gradId})"/>
+      </svg>
+    `.trim();
+    
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  };
+
+  // Normalize and validate URL
+  const normalizeUrl = (url: string): string | null => {
+    if (!url || !url.trim()) return null;
+    
+    let normalized = url.trim();
+    
+    // Handle YouTube short URLs
+    if (normalized.includes('youtu.be/')) {
+      const videoId = normalized.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0];
+      if (videoId) {
+        normalized = `https://www.youtube.com/watch?v=${videoId}`;
+      }
+    }
+    
+    // Handle YouTube mobile URLs
+    if (normalized.includes('youtube.com/watch') || normalized.includes('youtube.com/embed')) {
+      // Already valid YouTube URL
+    }
+    
+    // Validate URL format
+    try {
+      const urlObj = new URL(normalized);
+      // Check if it's a valid protocol
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        return null;
+      }
+      return normalized;
+    } catch (e) {
+      // If URL parsing fails, try adding https://
+      try {
+        const testUrl = normalized.startsWith('http') ? normalized : `https://${normalized}`;
+        new URL(testUrl);
+        return testUrl;
+      } catch (e2) {
+        return null;
+      }
+    }
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!songForm.url || !songForm.title) return;
+    setUrlError('');
+    
+    if (!songForm.url || !songForm.title) {
+      setUrlError('Please provide both URL and title');
+      return;
+    }
+    
+    const normalizedUrl = normalizeUrl(songForm.url);
+    if (!normalizedUrl) {
+      setUrlError('Invalid URL format. Please enter a valid YouTube, SoundCloud, or direct audio URL.');
+      return;
+    }
     
     onAddSong({
       ...songForm,
-      coverUrl: `https://picsum.photos/seed/${songForm.title.replace(/\s+/g, '')}/400/400`,
-      duration: 210, 
+      url: normalizedUrl,
+      coverUrl: generateGradientUrl(songForm.title + songForm.artist),
+      duration: 0, // Will be updated when song is played and duration is detected
     });
     setIsAdding(false);
     setSongForm({ title: '', artist: '', url: '', album: '' });
+    setUrlError('');
   };
 
   return (
@@ -146,7 +225,9 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
                 <div className="hidden md:block text-zinc-400 truncate text-sm group-hover:text-zinc-300 transition-colors">{song.album}</div>
 
                 <div className="text-right pr-4 text-sm text-zinc-400 group-hover:text-zinc-300">
-                  {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
+                  {song.duration > 0 
+                    ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}`
+                    : '--:--'}
                 </div>
               </motion.div>
             ))
@@ -169,13 +250,24 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
             <div className="space-y-1 mb-2">
                 <input 
                 required
-                type="url"
-                placeholder="YouTube or Audio URL" 
-                className="bg-zinc-800 p-4 rounded-lg outline-none w-full focus:ring-1 ring-emerald-500 border border-zinc-700 transition-all"
+                type="text"
+                placeholder="YouTube, SoundCloud, or Direct Audio URL" 
+                className={`bg-zinc-800 p-4 rounded-lg outline-none w-full focus:ring-1 ring-emerald-500 border transition-all ${
+                  urlError ? 'border-rose-500' : 'border-zinc-700'
+                }`}
                 value={songForm.url}
-                onChange={e => setSongForm({ ...songForm, url: e.target.value })}
+                onChange={e => {
+                  setSongForm({ ...songForm, url: e.target.value });
+                  setUrlError('');
+                }}
                 />
-                <p className="text-[10px] text-zinc-500 px-1 italic">Note: Paste a direct URL to a song or YouTube video.</p>
+                {urlError ? (
+                  <p className="text-xs text-rose-400 px-1">{urlError}</p>
+                ) : (
+                  <p className="text-[10px] text-zinc-500 px-1 italic">
+                    Supports: YouTube (youtube.com, youtu.be), SoundCloud, Vimeo, or direct audio URLs (mp3, m4a, etc.)
+                  </p>
+                )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

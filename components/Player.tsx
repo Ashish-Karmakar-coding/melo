@@ -28,12 +28,15 @@ export const Player: React.FC<PlayerProps> = ({
   if (!currentSong) return null;
 
   const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
     const min = Math.floor(seconds / 60);
     const sec = Math.floor(seconds % 60);
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const progressPercent = (state.progress / currentSong.duration) * 100;
+  const progressPercent = currentSong.duration > 0 
+    ? (state.progress / currentSong.duration) * 100 
+    : 0;
 
   return (
     <div 

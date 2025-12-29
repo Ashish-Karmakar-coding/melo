@@ -54,6 +54,11 @@ const App: React.FC = () => {
 
   const handlePlaySong = (playlistId: string, songIndex: number) => {
     skipCountRef.current = 0; // Reset error skip counter on manual play
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist || !playlist.songs[songIndex] || !playlist.songs[songIndex].url) {
+      console.error('Invalid song or playlist');
+      return;
+    }
     setPlayerState(prev => ({
       ...prev,
       currentPlaylistId: playlistId,
@@ -64,20 +69,43 @@ const App: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (!currentPlaylist || currentPlaylist.songs.length === 0) return;
+    if (!currentPlaylist || currentPlaylist.songs.length === 0) {
+      setPlayerState(prev => ({ ...prev, isPlaying: false }));
+      return;
+    }
     let nextIndex = playerState.currentSongIndex + 1;
     if (nextIndex >= currentPlaylist.songs.length) {
-      nextIndex = 0;
+      if (playerState.repeatMode === RepeatMode.ALL) {
+        nextIndex = 0;
+      } else {
+        setPlayerState(prev => ({ ...prev, isPlaying: false }));
+        return;
+      }
     }
+    skipCountRef.current = 0; // Reset error counter on manual next
     setPlayerState(prev => ({ ...prev, currentSongIndex: nextIndex, progress: 0, isPlaying: true }));
   };
 
   const handlePrev = () => {
-    if (!currentPlaylist || currentPlaylist.songs.length === 0) return;
+    if (!currentPlaylist || currentPlaylist.songs.length === 0) {
+      setPlayerState(prev => ({ ...prev, isPlaying: false }));
+      return;
+    }
     let prevIndex = playerState.currentSongIndex - 1;
     if (prevIndex < 0) {
-      prevIndex = currentPlaylist.songs.length - 1;
+      if (playerState.repeatMode === RepeatMode.ALL) {
+        prevIndex = currentPlaylist.songs.length - 1;
+      } else {
+        // Restart current song
+        prevIndex = playerState.currentSongIndex;
+        setPlayerState(prev => ({ ...prev, progress: 0 }));
+        if (playerRef.current) {
+          playerRef.current.seekTo(0, 'seconds');
+        }
+        return;
+      }
     }
+    skipCountRef.current = 0; // Reset error counter on manual prev
     setPlayerState(prev => ({ ...prev, currentSongIndex: prevIndex, progress: 0, isPlaying: true }));
   };
 
@@ -86,12 +114,38 @@ const App: React.FC = () => {
     setCurrentView('PLAYLIST');
   };
 
+  // Generate gradient placeholder based on seed string
+  const generateGradientUrl = (seed: string): string => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    const color1 = `hsl(${hue}, 70%, 50%)`;
+    const color2 = `hsl(${(hue + 60) % 360}, 70%, 40%)`;
+    const gradId = `grad-${Math.abs(hash)}`;
+    
+    const svg = `
+      <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${color1};stop-opacity:1" />
+            <stop offset="100%" style="stop-color:${color2};stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="400" height="400" fill="url(#${gradId})"/>
+      </svg>
+    `.trim();
+    
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  };
+
   const handleAddPlaylist = (name: string, description: string) => {
     const newPlaylist: Playlist = {
       id: `p-${Date.now()}`,
       name,
       description,
-      coverUrl: `https://picsum.photos/seed/${Date.now()}/400/400`,
+      coverUrl: generateGradientUrl(name + Date.now().toString()),
       songs: []
     };
     setPlaylists([...playlists, newPlaylist]);
@@ -109,11 +163,15 @@ const App: React.FC = () => {
   };
 
   const handleAddSong = (playlistId: string, song: Omit<Song, 'id' | 'dateAdded'>) => {
+    if (!song.url || !song.title) {
+      console.error('Invalid song data');
+      return;
+    }
     setPlaylists(playlists.map(p => {
       if (p.id === playlistId) {
         const newSong: Song = {
           ...song,
-          id: `s-${Date.now()}`,
+          id: `s-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           dateAdded: new Date().toISOString()
         };
         return { ...p, songs: [...p.songs, newSong] };
@@ -159,12 +217,18 @@ const App: React.FC = () => {
     if (skipCountRef.current > 5) {
       console.error('Too many track errors. Playback stopped.');
       setPlayerState(prev => ({ ...prev, isPlaying: false }));
+      skipCountRef.current = 0; // Reset counter
       return;
     }
 
     // Auto-skip failed track with a delay to allow UI to settle
     setTimeout(() => {
-      handleNext();
+      if (currentPlaylist && currentPlaylist.songs.length > 0) {
+        handleNext();
+      } else {
+        setPlayerState(prev => ({ ...prev, isPlaying: false }));
+        skipCountRef.current = 0;
+      }
     }, 1500);
   };
 
@@ -173,6 +237,32 @@ const App: React.FC = () => {
       playerRef.current.seekTo(time, 'seconds');
     }
     setPlayerState(prev => ({ ...prev, progress: time }));
+  };
+
+  const handleDuration = (duration: number) => {
+    // Update the song's duration in the playlist when detected
+    if (currentSong && duration > 0) {
+      // Update if duration is 0 (not yet set) or if it's significantly different (more than 1 second)
+      const shouldUpdate = currentSong.duration === 0 || Math.abs(currentSong.duration - duration) > 1;
+      
+      if (shouldUpdate) {
+        setPlaylists(prevPlaylists => 
+          prevPlaylists.map(playlist => {
+            if (playlist.id === playerState.currentPlaylistId) {
+              return {
+                ...playlist,
+                songs: playlist.songs.map(song => 
+                  song.id === currentSong.id 
+                    ? { ...song, duration: Math.round(duration) }
+                    : song
+                )
+              };
+            }
+            return playlist;
+          })
+        );
+      }
+    }
   };
 
   return (
@@ -189,12 +279,25 @@ const App: React.FC = () => {
         <PlayerComponent
           ref={playerRef}
           url={currentSong?.url || undefined}
-          playing={playerState.isPlaying}
+          playing={playerState.isPlaying && !!currentSong?.url}
           volume={playerState.volume}
           onProgress={(p: any) => {
-            setPlayerState(prev => ({ ...prev, progress: p.playedSeconds }));
+            if (p.playedSeconds !== undefined) {
+              setPlayerState(prev => ({ ...prev, progress: p.playedSeconds }));
+            }
           }}
-          onEnded={handleNext}
+          onDuration={handleDuration}
+          onEnded={() => {
+            if (playerState.repeatMode === RepeatMode.ONE) {
+              // Repeat current song
+              setPlayerState(prev => ({ ...prev, progress: 0 }));
+              if (playerRef.current) {
+                playerRef.current.seekTo(0, 'seconds');
+              }
+            } else {
+              handleNext();
+            }
+          }}
           onError={handlePlayerError}
           width="100%"
           height="100%"
@@ -206,12 +309,29 @@ const App: React.FC = () => {
                 modestbranding: 1,
                 rel: 0,
                 iv_load_policy: 3,
-                enablejsapi: 1
+                enablejsapi: 1,
+                playsinline: 1
+              }
+            },
+            soundcloud: {
+              options: {
+                auto_play: false,
+                show_artwork: false
+              }
+            },
+            vimeo: {
+              playerOptions: {
+                autoplay: true,
+                controls: false,
+                responsive: true
               }
             },
             file: {
               forceAudio: true,
-              attributes: { preload: 'auto' }
+              attributes: { 
+                preload: 'auto',
+                controls: false
+              }
             }
           }}
         />
