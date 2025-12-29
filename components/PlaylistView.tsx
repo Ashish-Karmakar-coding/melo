@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Playlist, Song } from '../types';
 import { Icon } from './Icon';
@@ -8,8 +8,11 @@ interface PlaylistViewProps {
   playlist: Playlist;
   isPlaying: boolean;
   currentSongId?: string;
+  playlists: Playlist[];
   onPlaySong: (idx: number) => void;
   onAddSong: (song: Omit<Song, 'id' | 'dateAdded'>) => void;
+  onDeleteSong: (songId: string) => void;
+  onMoveSong: (songId: string, toPlaylistId: string) => void;
   onDeletePlaylist: () => void;
   onExport: () => void;
 }
@@ -17,15 +20,41 @@ interface PlaylistViewProps {
 export const PlaylistView: React.FC<PlaylistViewProps> = ({ 
   playlist, 
   isPlaying, 
-  currentSongId, 
+  currentSongId,
+  playlists,
   onPlaySong, 
   onAddSong,
+  onDeleteSong,
+  onMoveSong,
   onDeletePlaylist,
   onExport
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', album: '' });
   const [urlError, setUrlError] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showMoveMenu, setShowMoveMenu] = useState<string | null>(null);
+  const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId) {
+        const menuElement = menuRefs.current[openMenuId];
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          setOpenMenuId(null);
+          setShowMoveMenu(null);
+        }
+      }
+    };
+
+    if (openMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [openMenuId]);
 
   // Generate gradient placeholder based on seed string
   const generateGradientUrl = (seed: string): string => {
@@ -159,11 +188,12 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
       </header>
 
       <section className="px-4 md:px-8">
-        <div className="grid grid-cols-[40px_1fr_1fr_100px] gap-4 py-2 border-b border-zinc-800 text-zinc-400 text-sm uppercase tracking-wider mb-4">
+        <div className="grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 py-2 border-b border-zinc-800 text-zinc-400 text-sm uppercase tracking-wider mb-4">
           <div className="text-center">#</div>
           <div>Title</div>
           <div className="hidden md:block">Album</div>
           <div className="text-right pr-4"><Icon name="Clock" size={16} /></div>
+          <div></div>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -185,8 +215,12 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
                   transition: { duration: 0.1 }
                 }}
                 transition={{ delay: idx * 0.05 }}
-                onClick={() => onPlaySong(idx)}
-                className={`grid grid-cols-[40px_1fr_1fr_100px] gap-4 py-3 px-2 rounded-md items-center cursor-pointer group relative overflow-hidden transition-all duration-200 ${currentSongId === song.id ? 'bg-white/10' : ''}`}
+                onClick={(e) => {
+                  // Don't trigger play if clicking on menu button
+                  if ((e.target as HTMLElement).closest('.song-menu')) return;
+                  onPlaySong(idx);
+                }}
+                className={`grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 py-3 px-2 rounded-md items-center cursor-pointer group relative overflow-visible transition-all duration-200 ${currentSongId === song.id ? 'bg-white/10' : ''}`}
               >
                 {/* Active Indicator Bar */}
                 {currentSongId === song.id && (
@@ -228,6 +262,77 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
                   {song.duration > 0 
                     ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}`
                     : '--:--'}
+                </div>
+
+                {/* Three Dots Menu */}
+                <div 
+                  className="relative song-menu"
+                  ref={(el) => { menuRefs.current[song.id] = el; }}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === song.id ? null : song.id);
+                      setShowMoveMenu(null);
+                    }}
+                    className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-zinc-800"
+                  >
+                    <Icon name="MoreVertical" size={18} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {openMenuId === song.id && (
+                    <div className="absolute right-0 top-8 z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[180px] overflow-hidden">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSong(song.id);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 hover:text-rose-400 transition-colors flex items-center gap-2"
+                      >
+                        <Icon name="Trash2" size={16} />
+                        Remove from playlist
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMoveMenu(showMoveMenu === song.id ? null : song.id);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 transition-colors flex items-center gap-2 justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon name="FolderPlus" size={16} />
+                          Move to playlist
+                        </div>
+                        <Icon name="ChevronRight" size={16} />
+                      </button>
+                      
+                      {/* Move to Playlist Submenu */}
+                      {showMoveMenu === song.id && (
+                        <div className="bg-zinc-950 border-t border-zinc-800 max-h-48 overflow-y-auto">
+                          {playlists.filter(p => p.id !== playlist.id).length === 0 ? (
+                            <div className="px-4 py-2 text-xs text-zinc-500">No other playlists</div>
+                          ) : (
+                            playlists.filter(p => p.id !== playlist.id).map(targetPlaylist => (
+                              <button
+                                key={targetPlaylist.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onMoveSong(song.id, targetPlaylist.id);
+                                  setOpenMenuId(null);
+                                  setShowMoveMenu(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors truncate"
+                              >
+                                {targetPlaylist.name}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))

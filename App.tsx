@@ -180,6 +180,44 @@ const App: React.FC = () => {
     }));
   };
 
+  const handleDeleteSong = (playlistId: string, songId: string) => {
+    setPlaylists(playlists.map(p => {
+      if (p.id === playlistId) {
+        const updatedSongs = p.songs.filter(s => s.id !== songId);
+        // If the deleted song was currently playing, stop playback
+        if (playerState.currentPlaylistId === playlistId && currentSong?.id === songId) {
+          if (updatedSongs.length === 0) {
+            setPlayerState(prev => ({ ...prev, isPlaying: false, currentPlaylistId: null }));
+          } else {
+            const newIndex = Math.min(playerState.currentSongIndex, updatedSongs.length - 1);
+            setPlayerState(prev => ({ ...prev, currentSongIndex: newIndex }));
+          }
+        }
+        return { ...p, songs: updatedSongs };
+      }
+      return p;
+    }));
+  };
+
+  const handleMoveSong = (fromPlaylistId: string, songId: string, toPlaylistId: string) => {
+    if (fromPlaylistId === toPlaylistId) return;
+    
+    setPlaylists(playlists.map(p => {
+      if (p.id === fromPlaylistId) {
+        // Remove song from source playlist
+        return { ...p, songs: p.songs.filter(s => s.id !== songId) };
+      }
+      if (p.id === toPlaylistId) {
+        // Add song to target playlist
+        const songToMove = playlists.find(pl => pl.id === fromPlaylistId)?.songs.find(s => s.id === songId);
+        if (songToMove) {
+          return { ...p, songs: [...p.songs, songToMove] };
+        }
+      }
+      return p;
+    }));
+  };
+
   const handleExportPlaylist = (playlist: Playlist) => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(playlist, null, 2));
     const downloadAnchorNode = document.createElement('a');
@@ -365,8 +403,11 @@ const App: React.FC = () => {
                   playlist={playlists.find(p => p.id === selectedPlaylistId)!}
                   isPlaying={playerState.isPlaying && playerState.currentPlaylistId === selectedPlaylistId}
                   currentSongId={currentSong?.id}
+                  playlists={playlists}
                   onPlaySong={(idx) => handlePlaySong(selectedPlaylistId, idx)}
                   onAddSong={(song) => handleAddSong(selectedPlaylistId, song)}
+                  onDeleteSong={(songId) => handleDeleteSong(selectedPlaylistId, songId)}
+                  onMoveSong={(songId, toPlaylistId) => handleMoveSong(selectedPlaylistId, songId, toPlaylistId)}
                   onDeletePlaylist={() => handleDeletePlaylist(selectedPlaylistId)}
                   onExport={() => handleExportPlaylist(playlists.find(p => p.id === selectedPlaylistId)!)}
                 />
