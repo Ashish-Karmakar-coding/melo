@@ -48,13 +48,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Icon name="Search" />
             Search
           </button>
-          <button 
-            onClick={() => onViewChange('LIBRARY')}
-            className={`flex items-center gap-3 font-medium transition-colors ${currentView === 'LIBRARY' ? 'text-emerald-500' : 'text-zinc-400 hover:text-white'}`}
-          >
-            <Icon name="Library" />
-            Your Library
-          </button>
         </nav>
 
         <div className="flex flex-col gap-4 mt-4">
@@ -96,9 +89,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
         <button onClick={() => onViewChange('SEARCH')} className={currentView === 'SEARCH' ? 'text-emerald-500' : 'text-zinc-400'}>
           <Icon name="Search" />
-        </button>
-        <button onClick={() => onViewChange('LIBRARY')} className={currentView === 'LIBRARY' ? 'text-emerald-500' : 'text-zinc-400'}>
-          <Icon name="Library" />
         </button>
       </nav>
     </>

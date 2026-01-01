@@ -511,7 +511,7 @@ const App: React.FC = () => {
             onExportAllPlaylists={handleExportAllPlaylists}
           />
 
-          <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-zinc-900 to-black">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-gradient-to-b from-zinc-900 to-black">
             <AnimatePresence mode="wait">
               {currentView === 'HOME' && (
                 <HomeView 

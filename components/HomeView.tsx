@@ -25,14 +25,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, 
       exit={{ opacity: 0, y: -20 }}
       className="p-8 pb-32"
     >
-      <header className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold">{greeting}</h2>
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold">{greeting}</h2>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105"
+          className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105 text-sm md:text-base"
         >
-          <Icon name="Plus" size={20} />
-          Create Playlist
+          <Icon name="Plus" size={18} className="md:w-5 md:h-5" />
+          <span className="hidden sm:inline">Create Playlist</span>
+          <span className="sm:hidden">Create</span>
         </button>
       </header>
 
@@ -58,8 +59,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, 
 
       {/* Made For You */}
       <section>
-        <h3 className="text-2xl font-bold mb-6">Made For You</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+        <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Made For You</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
           {playlists.map((p, idx) => (
             <motion.div
               key={p.id}

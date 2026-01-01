@@ -34,4 +34,4 @@ export enum RepeatMode {
   ALL = 'ALL'
 }
 
-export type ViewType = 'HOME' | 'PLAYLIST' | 'SEARCH' | 'LIBRARY';
+export type ViewType = 'HOME' | 'PLAYLIST' | 'SEARCH';

@@ -47,34 +47,34 @@ export const Player: React.FC<PlayerProps> = ({
         <div className="md:hidden absolute inset-0 z-0" onClick={() => setIsExpanded(true)}></div>
 
         {/* Info */}
-        <div className="flex items-center gap-4 w-1/3 z-10">
-          <img src={currentSong.coverUrl} className="w-14 h-14 rounded-md object-cover shadow-lg" alt="" />
-          <div className="hidden sm:block overflow-hidden">
-            <h4 className="font-semibold text-sm truncate">{currentSong.title}</h4>
-            <p className="text-xs text-zinc-400 truncate">{currentSong.artist}</p>
+        <div className="flex items-center gap-2 md:gap-4 w-1/3 min-w-0 z-10">
+          <img src={currentSong.coverUrl} className="w-12 h-12 md:w-14 md:h-14 rounded-md object-cover shadow-lg flex-shrink-0" alt="" />
+          <div className="hidden sm:block overflow-hidden min-w-0 flex-1">
+            <h4 className="font-semibold text-xs md:text-sm truncate">{currentSong.title}</h4>
+            <p className="text-[10px] md:text-xs text-zinc-400 truncate">{currentSong.artist}</p>
           </div>
         </div>
 
         {/* Controls */}
         <div className="flex flex-col items-center gap-2 w-1/3 z-10">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             <button className="text-zinc-400 hover:text-white transition-colors hidden sm:block">
-              <Icon name="Shuffle" size={18} />
+              <Icon name="Shuffle" size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
             <button onClick={onPrev} className="text-zinc-400 hover:text-white transition-colors">
-              <Icon name="SkipBack" fill="currentColor" size={24} />
+              <Icon name="SkipBack" fill="currentColor" size={20} className="md:w-6 md:h-6" />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onPlayPause(); }} 
-              className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+              className="w-9 h-9 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform"
             >
-              <Icon name={state.isPlaying ? "Pause" : "Play"} fill="currentColor" size={20} />
+              <Icon name={state.isPlaying ? "Pause" : "Play"} fill="currentColor" size={18} className="md:w-5 md:h-5" />
             </button>
             <button onClick={onNext} className="text-zinc-400 hover:text-white transition-colors">
-              <Icon name="SkipForward" fill="currentColor" size={24} />
+              <Icon name="SkipForward" fill="currentColor" size={20} className="md:w-6 md:h-6" />
             </button>
             <button className="text-zinc-400 hover:text-white transition-colors hidden sm:block">
-              <Icon name="Repeat" size={18} />
+              <Icon name="Repeat" size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
           </div>
           <div className="hidden md:flex items-center gap-2 w-full max-w-lg">
