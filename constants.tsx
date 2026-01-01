@@ -27,53 +27,6 @@ const generateGradientUrl = (seed: string): string => {
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
 
-export const INITIAL_PLAYLISTS: Playlist[] = [
-  {
-    id: 'p1',
-    name: 'Lo-Fi Chill Beats',
-    description: 'Relaxing lo-fi hip hop to study and relax to.',
-    coverUrl: generateGradientUrl('music1'),
-    songs: [
-      {
-        id: 's1',
-        title: 'Midnight Coffee',
-        artist: 'Chill Master',
-        album: 'Night Owl',
-        coverUrl: generateGradientUrl('song1'),
-        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        duration: 372,
-        dateAdded: new Date().toISOString()
-      },
-      {
-        id: 's2',
-        title: 'Study Flow',
-        artist: 'Lofi Girl',
-        album: 'Concentration',
-        coverUrl: generateGradientUrl('song2'),
-        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-        duration: 425,
-        dateAdded: new Date().toISOString()
-      }
-    ]
-  },
-  {
-    id: 'p2',
-    name: 'Synthwave Dreams',
-    description: 'Electric atmosphere for long drives.',
-    coverUrl: generateGradientUrl('music2'),
-    songs: [
-      {
-        id: 's3',
-        title: 'Neon Skyline',
-        artist: 'Retro Runner',
-        album: 'Arcade City',
-        coverUrl: generateGradientUrl('song3'),
-        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-        duration: 312,
-        dateAdded: new Date().toISOString()
-      }
-    ]
-  }
-];
+export const INITIAL_PLAYLISTS: Playlist[] = [];
 
 export const APP_PRIMARY_COLOR = '#10b981'; // Emerald 500

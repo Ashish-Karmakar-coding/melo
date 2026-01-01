@@ -59,6 +59,7 @@ const App: React.FC = () => {
       console.error('Invalid song or playlist');
       return;
     }
+    // Update state first
     setPlayerState(prev => ({
       ...prev,
       currentPlaylistId: playlistId,
@@ -66,6 +67,19 @@ const App: React.FC = () => {
       isPlaying: true,
       progress: 0
     }));
+    // Force play after a brief moment to ensure URL is updated
+    setTimeout(() => {
+      if (playerRef.current) {
+        const internalPlayer = playerRef.current.getInternalPlayer();
+        if (internalPlayer && typeof internalPlayer.play === 'function') {
+          try {
+            internalPlayer.play();
+          } catch (e) {
+            // Ignore play errors - ReactPlayer will handle it
+          }
+        }
+      }
+    }, 50);
   };
 
   const handleNext = () => {
@@ -84,6 +98,19 @@ const App: React.FC = () => {
     }
     skipCountRef.current = 0; // Reset error counter on manual next
     setPlayerState(prev => ({ ...prev, currentSongIndex: nextIndex, progress: 0, isPlaying: true }));
+    // Force play after state update
+    setTimeout(() => {
+      if (playerRef.current) {
+        const internalPlayer = playerRef.current.getInternalPlayer();
+        if (internalPlayer && typeof internalPlayer.play === 'function') {
+          try {
+            internalPlayer.play();
+          } catch (e) {
+            // Ignore play errors
+          }
+        }
+      }
+    }, 50);
   };
 
   const handlePrev = () => {
@@ -107,6 +134,19 @@ const App: React.FC = () => {
     }
     skipCountRef.current = 0; // Reset error counter on manual prev
     setPlayerState(prev => ({ ...prev, currentSongIndex: prevIndex, progress: 0, isPlaying: true }));
+    // Force play after state update
+    setTimeout(() => {
+      if (playerRef.current) {
+        const internalPlayer = playerRef.current.getInternalPlayer();
+        if (internalPlayer && typeof internalPlayer.play === 'function') {
+          try {
+            internalPlayer.play();
+          } catch (e) {
+            // Ignore play errors
+          }
+        }
+      }
+    }, 50);
   };
 
   const handlePlaylistClick = (id: string) => {
@@ -228,18 +268,60 @@ const App: React.FC = () => {
     downloadAnchorNode.remove();
   };
 
+  const handleExportAllPlaylists = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(playlists, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `all_playlists_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   const handleImportPlaylist = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const imported = JSON.parse(e.target?.result as string) as Playlist;
-        if (!imported.name || !Array.isArray(imported.songs)) throw new Error('Invalid format');
-        const sanitized: Playlist = { ...imported, id: `p-${Date.now()}` };
-        setPlaylists(prev => [...prev, sanitized]);
+        const parsed = JSON.parse(e.target?.result as string);
+        
+        // Check if it's an array of playlists (all playlists export)
+        if (Array.isArray(parsed)) {
+          const sanitizedPlaylists: Playlist[] = parsed
+            .filter((p: any) => p && p.name && Array.isArray(p.songs))
+            .map((playlist: Playlist, index: number) => ({
+              ...playlist,
+              id: `p-${Date.now()}-${index}`,
+              songs: playlist.songs.map((song, songIndex) => ({
+                ...song,
+                id: song.id || `s-${Date.now()}-${index}-${songIndex}`
+              }))
+            }));
+          
+          if (sanitizedPlaylists.length === 0) {
+            throw new Error('No valid playlists found in file');
+          }
+          
+          setPlaylists(prev => [...prev, ...sanitizedPlaylists]);
+        } 
+        // Single playlist import
+        else if (parsed && parsed.name && Array.isArray(parsed.songs)) {
+          const sanitized: Playlist = { 
+            ...parsed, 
+            id: `p-${Date.now()}`,
+            songs: parsed.songs.map((song: Song, index: number) => ({
+              ...song,
+              id: song.id || `s-${Date.now()}-${index}`
+            }))
+          };
+          setPlaylists(prev => [...prev, sanitized]);
+        } 
+        else {
+          throw new Error('Invalid format');
+        }
       } catch (err) {
-        alert('Invalid playlist file.');
+        alert(`Invalid playlist file: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     };
     reader.readAsText(file);
@@ -272,9 +354,30 @@ const App: React.FC = () => {
 
   const handleSeek = (time: number) => {
     if (playerRef.current) {
+      const wasPlaying = playerState.isPlaying;
       playerRef.current.seekTo(time, 'seconds');
+      // Maintain playing state after seek
+      setPlayerState(prev => ({ 
+        ...prev, 
+        progress: time,
+        isPlaying: wasPlaying // Keep the playing state
+      }));
+      // Force play after seek if it was playing
+      if (wasPlaying) {
+        setTimeout(() => {
+          if (playerRef.current) {
+            const internalPlayer = playerRef.current.getInternalPlayer();
+            if (internalPlayer && typeof internalPlayer.play === 'function') {
+              try {
+                internalPlayer.play();
+              } catch (e) {
+                // Ignore play errors - ReactPlayer will handle it
+              }
+            }
+          }
+        }, 100);
+      }
     }
-    setPlayerState(prev => ({ ...prev, progress: time }));
   };
 
   const handleDuration = (duration: number) => {
@@ -319,12 +422,29 @@ const App: React.FC = () => {
           url={currentSong?.url || undefined}
           playing={playerState.isPlaying && !!currentSong?.url}
           volume={playerState.volume}
+          progressInterval={100}
+          playsinline
+          preload="auto"
           onProgress={(p: any) => {
             if (p.playedSeconds !== undefined) {
               setPlayerState(prev => ({ ...prev, progress: p.playedSeconds }));
             }
           }}
           onDuration={handleDuration}
+          onReady={() => {
+            // Ensure player maintains playing state when ready
+            if (playerState.isPlaying && playerRef.current && currentSong?.url) {
+              // Force play if it should be playing
+              const internalPlayer = playerRef.current.getInternalPlayer();
+              if (internalPlayer && typeof internalPlayer.play === 'function') {
+                try {
+                  internalPlayer.play();
+                } catch (e) {
+                  // Ignore play errors
+                }
+              }
+            }
+          }}
           onEnded={() => {
             if (playerState.repeatMode === RepeatMode.ONE) {
               // Repeat current song
@@ -348,20 +468,23 @@ const App: React.FC = () => {
                 rel: 0,
                 iv_load_policy: 3,
                 enablejsapi: 1,
-                playsinline: 1
+                playsinline: 1,
+                preload: 'auto'
               }
             },
             soundcloud: {
               options: {
-                auto_play: false,
-                show_artwork: false
+                auto_play: true,
+                show_artwork: false,
+                preload: true
               }
             },
             vimeo: {
               playerOptions: {
                 autoplay: true,
                 controls: false,
-                responsive: true
+                responsive: true,
+                background: false
               }
             },
             file: {
@@ -385,6 +508,7 @@ const App: React.FC = () => {
             onPlaylistClick={handlePlaylistClick}
             onAddPlaylist={() => handleAddPlaylist('New Playlist', 'No description')}
             onImportPlaylist={handleImportPlaylist}
+            onExportAllPlaylists={handleExportAllPlaylists}
           />
 
           <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-zinc-900 to-black">

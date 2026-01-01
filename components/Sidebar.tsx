@@ -10,6 +10,7 @@ interface SidebarProps {
   onPlaylistClick: (id: string) => void;
   onAddPlaylist: () => void;
   onImportPlaylist: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onExportAllPlaylists: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -18,7 +19,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   playlists, 
   onPlaylistClick, 
   onAddPlaylist,
-  onImportPlaylist 
+  onImportPlaylist,
+  onExportAllPlaylists
 }) => {
   return (
     <>
@@ -59,11 +61,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center justify-between text-zinc-400 uppercase text-xs font-bold tracking-widest">
             <span>Playlists</span>
             <div className="flex gap-2">
-                <label className="cursor-pointer hover:text-white">
+                <label className="cursor-pointer hover:text-white" title="Import Playlist">
                     <Icon name="Upload" size={14} />
                     <input type="file" className="hidden" accept=".json" onChange={onImportPlaylist} />
                 </label>
-                <button onClick={onAddPlaylist} className="hover:text-white">
+                {playlists.length > 0 && (
+                  <button onClick={onExportAllPlaylists} className="hover:text-white" title="Download All Playlists">
+                      <Icon name="Download" size={14} />
+                  </button>
+                )}
+                <button onClick={onAddPlaylist} className="hover:text-white" title="Add Playlist">
                     <Icon name="Plus" size={16} />
                 </button>
             </div>
