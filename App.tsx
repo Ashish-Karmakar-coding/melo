@@ -604,6 +604,7 @@ const App: React.FC = () => {
                   onCreateAndMoveSong={handleCreateAndMoveSong}
                   onDeletePlaylist={() => handleDeletePlaylist(selectedPlaylistId)}
                   onUpdatePlaylist={handleUpdatePlaylist}
+                  onBack={() => setCurrentView('HOME')}
                   onExport={() => handleExportPlaylist(playlists.find(p => p.id === selectedPlaylistId)!)}
                 />
               )}

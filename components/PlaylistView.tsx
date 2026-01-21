@@ -17,6 +17,7 @@ interface PlaylistViewProps {
   onDeletePlaylist: () => void;
   onUpdatePlaylist: (id: string, name: string, description: string) => void;
   onExport: () => void;
+  onBack?: () => void;
 }
 
 export const PlaylistView: React.FC<PlaylistViewProps> = ({
@@ -31,7 +32,8 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
   onCreateAndMoveSong,
   onDeletePlaylist,
   onUpdatePlaylist,
-  onExport
+  onExport,
+  onBack,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [songForm, setSongForm] = useState({ title: '', artist: '', url: '', album: '' });
@@ -166,7 +168,16 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
       exit={{ opacity: 0 }}
       className="pb-32 overflow-visible"
     >
-      <header className="p-4 md:p-8 pb-8 md:pb-12 pt-8 md:pt-16 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-8 bg-gradient-to-b from-emerald-900/40 to-transparent">
+      <div className="md:hidden p-4 pb-0 flex items-center">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
+        >
+          <Icon name="ChevronLeft" size={28} />
+        </button>
+      </div>
+
+      <header className="p-4 md:p-8 pb-8 md:pb-12 pt-4 md:pt-16 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-8 bg-gradient-to-b from-emerald-900/40 to-transparent">
         <motion.img
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
