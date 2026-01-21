@@ -170,9 +170,10 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
     >
       <button
         onClick={onBack}
-        className="md:hidden absolute top-4 left-4 z-50 p-2 rounded-full glass hover:bg-white/10 transition-colors shadow-lg"
+        className="absolute top-6 left-6 z-50 w-12 h-12 flex items-center justify-center rounded-full glass hover:bg-white/10 transition-all hover:scale-110 shadow-2xl group"
+        title="Go Back"
       >
-        <Icon name="ChevronLeft" size={28} />
+        <Icon name="ChevronLeft" size={28} className="group-hover:-translate-x-0.5 transition-transform" />
       </button>
 
       <header className="p-4 md:p-8 pb-8 md:pb-12 pt-8 md:pt-16 flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-8 bg-gradient-to-b from-emerald-900/40 to-transparent">

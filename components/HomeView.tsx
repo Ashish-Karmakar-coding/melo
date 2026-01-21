@@ -8,9 +8,10 @@ interface HomeViewProps {
   playlists: Playlist[];
   onPlaylistClick: (id: string) => void;
   onAddPlaylist: (name: string, description: string) => void;
+  onImportPlaylist: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, onAddPlaylist }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, onAddPlaylist, onImportPlaylist }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -31,14 +32,21 @@ export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, 
     >
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <h2 className="text-2xl md:text-3xl font-bold">{greeting}</h2>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105 text-sm md:text-base"
-        >
-          <Icon name="Plus" size={18} className="md:w-5 md:h-5" />
-          <span className="hidden sm:inline">Create Playlist</span>
-          <span className="sm:hidden">Create</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-all hover:scale-105 text-sm md:text-base cursor-pointer glass border-white/10">
+            <Icon name="Upload" size={18} className="md:w-5 md:h-5" />
+            <span>Import</span>
+            <input type="file" className="hidden" accept=".json" onChange={onImportPlaylist} />
+          </label>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105 text-sm md:text-base shadow-lg shadow-emerald-500/20"
+          >
+            <Icon name="Plus" size={18} className="md:w-5 md:h-5" />
+            <span className="hidden sm:inline">Create Playlist</span>
+            <span className="sm:hidden">Create</span>
+          </button>
+        </div>
       </header>
 
       {/* Quick Access */}

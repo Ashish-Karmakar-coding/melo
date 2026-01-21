@@ -588,6 +588,7 @@ const App: React.FC = () => {
                   playlists={playlists}
                   onPlaylistClick={handlePlaylistClick}
                   onAddPlaylist={handleAddPlaylist}
+                  onImportPlaylist={handleImportPlaylist}
                 />
               )}
               {currentView === 'PLAYLIST' && selectedPlaylistId && (
