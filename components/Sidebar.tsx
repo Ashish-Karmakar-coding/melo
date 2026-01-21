@@ -83,12 +83,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </aside>
 
       {/* Mobile Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 glass flex items-center justify-around z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 glass flex items-center justify-around z-50 px-6 pb-safe">
         <button onClick={() => onViewChange('HOME')} className={currentView === 'HOME' ? 'text-emerald-500' : 'text-zinc-400'}>
           <Icon name="Home" />
         </button>
         <button onClick={() => onViewChange('SEARCH')} className={currentView === 'SEARCH' ? 'text-emerald-500' : 'text-zinc-400'}>
           <Icon name="Search" />
+        </button>
+        <button onClick={() => onViewChange('HOME')} className="text-zinc-400">
+          <Icon name="ListMusic" />
         </button>
       </nav>
     </>

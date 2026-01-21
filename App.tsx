@@ -476,7 +476,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative h-screen overflow-hidden bg-black text-zinc-100">
+    <div className="relative h-[100dvh] overflow-hidden bg-black text-zinc-100">
       {/* 
           Robust Player Fix (Error 153 workaround):
           YouTube API error 153 is typically caused by "Invisible Player" restrictions.
@@ -568,7 +568,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Main UI Layer - Must be opaque to hide the background player */}
-      <div className="relative z-10 flex flex-col h-screen bg-black">
+      <div className="relative z-10 flex flex-col h-full bg-black">
         <div className="flex flex-1 overflow-hidden relative">
           <Sidebar
             currentView={currentView}

@@ -246,11 +246,11 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
       </header>
 
       <section className="px-4 md:px-8 overflow-visible">
-        <div className="grid grid-cols-[30px_1fr_80px_30px] md:grid-cols-[40px_1fr_1fr_100px_40px] gap-2 md:gap-4 py-2 border-b border-zinc-800 text-zinc-400 text-xs md:text-sm uppercase tracking-wider mb-4">
+        <div className="grid grid-cols-[30px_1fr_30px] sm:grid-cols-[30px_1fr_80px_30px] md:grid-cols-[40px_1fr_1fr_100px_40px] gap-2 md:gap-4 py-2 border-b border-zinc-800 text-zinc-400 text-xs md:text-sm uppercase tracking-wider mb-4">
           <div className="text-center">#</div>
           <div>Title</div>
           <div className="hidden md:block">Album</div>
-          <div className="text-right pr-2 md:pr-4"><Icon name="Clock" size={14} className="md:w-4 md:h-4" /></div>
+          <div className="hidden sm:block text-right pr-2 md:pr-4"><Icon name="Clock" size={14} className="md:w-4 md:h-4" /></div>
           <div></div>
         </div>
 
@@ -278,7 +278,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
                   if ((e.target as HTMLElement).closest('.song-menu')) return;
                   onPlaySong(idx);
                 }}
-                className={`grid grid-cols-[30px_1fr_80px_30px] md:grid-cols-[40px_1fr_1fr_100px_40px] gap-2 md:gap-4 py-3 px-2 rounded-md items-center cursor-pointer group relative transition-all duration-200 overflow-visible ${currentSongId === song.id ? 'bg-white/10' : ''}`}
+                className={`grid grid-cols-[30px_1fr_30px] sm:grid-cols-[30px_1fr_80px_30px] md:grid-cols-[40px_1fr_1fr_100px_40px] gap-2 md:gap-4 py-3 px-2 rounded-md items-center cursor-pointer group relative transition-all duration-200 overflow-visible ${currentSongId === song.id ? 'bg-white/10' : ''}`}
                 style={{ zIndex: openMenuId === song.id ? 100 : 1 }}
               >
                 {/* Active Indicator Bar */}
@@ -317,7 +317,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({
 
                 <div className="hidden md:block text-zinc-400 truncate text-sm group-hover:text-zinc-300 transition-colors">{song.album}</div>
 
-                <div className="text-right pr-2 md:pr-4 text-xs md:text-sm text-zinc-400 group-hover:text-zinc-300">
+                <div className="text-right pr-2 md:pr-4 text-xs md:text-sm text-zinc-400 group-hover:text-zinc-300 hidden sm:block">
                   {song.duration > 0
                     ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}`
                     : '--:--'}

@@ -145,19 +145,19 @@ export const Player: React.FC<PlayerProps> = ({
 
             <motion.div
               layoutId="artwork"
-              className="w-full aspect-square rounded-xl overflow-hidden shadow-2xl mb-12"
+              className="w-full max-h-[45vh] aspect-square rounded-xl overflow-hidden shadow-2xl mb-8 md:mb-12 mx-auto"
             >
               <img src={currentSong.coverUrl} className="w-full h-full object-cover" alt="" />
             </motion.div>
 
-            <div className="mb-12">
-              <h2 className="text-3xl font-bold mb-2">{currentSong.title}</h2>
-              <p className="text-lg text-zinc-400">{currentSong.artist}</p>
+            <div className="mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2 truncate">{currentSong.title}</h2>
+              <p className="text-base md:text-lg text-zinc-400 truncate">{currentSong.artist}</p>
             </div>
 
-            <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col gap-3 mb-6 md:mb-8">
               <div
-                className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"
+                className="w-full h-1.5 md:h-2 bg-zinc-800 rounded-full overflow-hidden cursor-pointer"
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const percent = (e.clientX - rect.left) / rect.width;
@@ -169,38 +169,40 @@ export const Player: React.FC<PlayerProps> = ({
                   style={{ width: `${progressPercent}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-sm text-zinc-400">
+              <div className="flex justify-between text-xs md:text-sm text-zinc-400">
                 <span>{formatTime(state.progress)}</span>
                 <span>{formatTime(currentSong.duration)}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex items-center justify-between mb-8 md:mb-12 px-4">
               <button
                 onClick={onShuffleToggle}
                 className={`transition-colors ${state.isShuffle ? 'text-emerald-500' : 'text-zinc-400'}`}
               >
-                <Icon name="Shuffle" size={24} />
+                <Icon name="Shuffle" size={20} />
               </button>
-              <button onClick={onPrev} className="text-zinc-100 hover:text-emerald-400 transition-colors">
-                <Icon name="SkipBack" size={40} fill="currentColor" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
-                className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.3)]"
-              >
-                <Icon name={state.isPlaying ? "Pause" : "Play"} size={32} fill="currentColor" />
-              </button>
-              <button onClick={onNext} className="text-zinc-100 hover:text-emerald-400 transition-colors">
-                <Icon name="SkipForward" size={40} fill="currentColor" />
-              </button>
+              <div className="flex items-center gap-6 md:gap-10">
+                <button onClick={onPrev} className="text-zinc-100 hover:text-emerald-400 transition-colors">
+                  <Icon name="SkipBack" size={32} fill="currentColor" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
+                  className="w-16 h-16 md:w-20 md:h-20 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                >
+                  <Icon name={state.isPlaying ? "Pause" : "Play"} size={28} fill="currentColor" />
+                </button>
+                <button onClick={onNext} className="text-zinc-100 hover:text-emerald-400 transition-colors">
+                  <Icon name="SkipForward" size={32} fill="currentColor" />
+                </button>
+              </div>
               <button
                 onClick={onRepeatToggle}
                 className={`transition-colors relative ${state.repeatMode !== 'OFF' ? 'text-emerald-500' : 'text-zinc-400'}`}
               >
-                <Icon name="Repeat" size={24} />
+                <Icon name="Repeat" size={20} />
                 {state.repeatMode === 'ONE' && (
-                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1 rounded-full">1</span>
+                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-black text-[9px] font-bold px-1 rounded-full">1</span>
                 )}
               </button>
             </div>

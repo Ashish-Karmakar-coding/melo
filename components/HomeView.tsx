@@ -19,15 +19,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, 
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="p-8 pb-32"
+      className="p-4 md:p-8 pb-32"
     >
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
         <h2 className="text-2xl md:text-3xl font-bold">{greeting}</h2>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 transition-transform hover:scale-105 text-sm md:text-base"
         >
@@ -86,35 +86,35 @@ export const HomeView: React.FC<HomeViewProps> = ({ playlists, onPlaylistClick, 
       {/* Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-zinc-900 w-full max-w-md p-8 rounded-2xl border border-zinc-700 shadow-2xl"
           >
             <h3 className="text-2xl font-bold mb-6">New Playlist</h3>
             <div className="flex flex-col gap-4">
-              <input 
+              <input
                 autoFocus
-                type="text" 
-                placeholder="Playlist Name" 
+                type="text"
+                placeholder="Playlist Name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 className="bg-zinc-800 p-4 rounded-lg outline-none focus:ring-2 ring-emerald-500 transition-all border border-zinc-700"
               />
-              <textarea 
-                placeholder="Description" 
+              <textarea
+                placeholder="Description"
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
                 className="bg-zinc-800 p-4 rounded-lg outline-none focus:ring-2 ring-emerald-500 transition-all border border-zinc-700 h-32 resize-none"
               />
               <div className="flex gap-4 mt-4">
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 p-3 rounded-lg font-bold hover:bg-zinc-800 transition-colors"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     onAddPlaylist(newName || 'Unnamed Playlist', newDesc);
                     setIsModalOpen(false);
