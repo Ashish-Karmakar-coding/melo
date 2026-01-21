@@ -12,6 +12,8 @@ interface PlayerProps {
   onPrev: () => void;
   onVolumeChange: (v: number) => void;
   onSeek: (t: number) => void;
+  onRepeatToggle: () => void;
+  onShuffleToggle: () => void;
 }
 
 export const Player: React.FC<PlayerProps> = ({
@@ -21,7 +23,9 @@ export const Player: React.FC<PlayerProps> = ({
   onNext,
   onPrev,
   onVolumeChange,
-  onSeek
+  onSeek,
+  onRepeatToggle,
+  onShuffleToggle
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -34,12 +38,12 @@ export const Player: React.FC<PlayerProps> = ({
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const progressPercent = currentSong.duration > 0 
-    ? (state.progress / currentSong.duration) * 100 
+  const progressPercent = currentSong.duration > 0
+    ? (state.progress / currentSong.duration) * 100
     : 0;
 
   return (
-    <div 
+    <div
       className={`glass fixed bottom-16 md:bottom-0 left-0 right-0 z-40 px-4 md:px-8 transition-all duration-300 ${isExpanded ? 'h-[100dvh]' : 'h-24 md:h-24'}`}
     >
       <div className={`flex items-center justify-between h-24 md:h-full relative ${isExpanded ? 'hidden' : 'flex'}`}>
@@ -58,28 +62,40 @@ export const Player: React.FC<PlayerProps> = ({
         {/* Controls */}
         <div className="flex flex-col items-center gap-2 w-1/3 z-10">
           <div className="flex items-center gap-3 md:gap-6">
-            <button className="text-zinc-400 hover:text-white transition-colors hidden sm:block">
+            <button
+              onClick={onShuffleToggle}
+              className={`transition-colors hidden sm:block ${state.isShuffle ? 'text-emerald-500' : 'text-zinc-400 hover:text-white'}`}
+            >
               <Icon name="Shuffle" size={16} className="md:w-[18px] md:h-[18px]" />
             </button>
             <button onClick={onPrev} className="text-zinc-400 hover:text-white transition-colors">
               <Icon name="SkipBack" fill="currentColor" size={20} className="md:w-6 md:h-6" />
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onPlayPause(); }} 
+            <button
+              onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
               className="w-9 h-9 md:w-10 md:h-10 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform"
             >
               <Icon name={state.isPlaying ? "Pause" : "Play"} fill="currentColor" size={18} className="md:w-5 md:h-5" />
             </button>
-            <button onClick={onNext} className="text-zinc-400 hover:text-white transition-colors">
+            <button
+              onClick={onNext}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
               <Icon name="SkipForward" fill="currentColor" size={20} className="md:w-6 md:h-6" />
             </button>
-            <button className="text-zinc-400 hover:text-white transition-colors hidden sm:block">
+            <button
+              onClick={onRepeatToggle}
+              className={`transition-colors hidden sm:block relative ${state.repeatMode !== 'OFF' ? 'text-emerald-500' : 'text-zinc-400 hover:text-white'}`}
+            >
               <Icon name="Repeat" size={16} className="md:w-[18px] md:h-[18px]" />
+              {state.repeatMode === 'ONE' && (
+                <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-black text-[8px] font-bold px-1 rounded-full">1</span>
+              )}
             </button>
           </div>
           <div className="hidden md:flex items-center gap-2 w-full max-w-lg">
             <span className="text-[10px] text-zinc-400 w-8">{formatTime(state.progress)}</span>
-            <div 
+            <div
               className="flex-1 h-1 bg-zinc-700 rounded-full cursor-pointer relative group"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -87,8 +103,8 @@ export const Player: React.FC<PlayerProps> = ({
                 onSeek(percent * currentSong.duration);
               }}
             >
-              <div 
-                className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full group-hover:bg-emerald-400 transition-colors" 
+              <div
+                className="absolute top-0 left-0 h-full bg-emerald-500 rounded-full group-hover:bg-emerald-400 transition-colors"
                 style={{ width: `${progressPercent}%` }}
               ></div>
             </div>
@@ -100,9 +116,9 @@ export const Player: React.FC<PlayerProps> = ({
         <div className="flex items-center justify-end gap-4 w-1/3 z-10">
           <div className="hidden lg:flex items-center gap-2 w-32">
             <Icon name="Volume2" size={18} className="text-zinc-400" />
-            <input 
-              type="range" 
-              min="0" max="1" step="0.01" 
+            <input
+              type="range"
+              min="0" max="1" step="0.01"
               value={state.volume}
               onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
               className="w-full h-1 bg-zinc-700 rounded-full accent-emerald-500 cursor-pointer"
@@ -117,7 +133,7 @@ export const Player: React.FC<PlayerProps> = ({
       {/* Fullscreen Mobile View */}
       <AnimatePresence>
         {isExpanded && (
-          <motion.div 
+          <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -127,7 +143,7 @@ export const Player: React.FC<PlayerProps> = ({
               <Icon name="ChevronDown" size={32} />
             </button>
 
-            <motion.div 
+            <motion.div
               layoutId="artwork"
               className="w-full aspect-square rounded-xl overflow-hidden shadow-2xl mb-12"
             >
@@ -140,7 +156,7 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="flex flex-col gap-4 mb-8">
-              <div 
+              <div
                 className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -148,7 +164,7 @@ export const Player: React.FC<PlayerProps> = ({
                   onSeek(percent * currentSong.duration);
                 }}
               >
-                <div 
+                <div
                   className="h-full bg-emerald-500"
                   style={{ width: `${progressPercent}%` }}
                 ></div>
@@ -160,16 +176,52 @@ export const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="flex items-center justify-between mb-12">
-              <button className="text-zinc-400"><Icon name="Shuffle" size={24} /></button>
-              <button onClick={onPrev}><Icon name="SkipBack" size={40} fill="currentColor" /></button>
-              <button 
-                onClick={onPlayPause} 
-                className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center"
+              <button
+                onClick={onShuffleToggle}
+                className={`transition-colors ${state.isShuffle ? 'text-emerald-500' : 'text-zinc-400'}`}
+              >
+                <Icon name="Shuffle" size={24} />
+              </button>
+              <button onClick={onPrev} className="text-zinc-100 hover:text-emerald-400 transition-colors">
+                <Icon name="SkipBack" size={40} fill="currentColor" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onPlayPause(); }}
+                className="w-20 h-20 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.3)]"
               >
                 <Icon name={state.isPlaying ? "Pause" : "Play"} size={32} fill="currentColor" />
               </button>
-              <button onClick={onNext}><Icon name="SkipForward" size={40} fill="currentColor" /></button>
-              <button className="text-zinc-400"><Icon name="Repeat" size={24} /></button>
+              <button onClick={onNext} className="text-zinc-100 hover:text-emerald-400 transition-colors">
+                <Icon name="SkipForward" size={40} fill="currentColor" />
+              </button>
+              <button
+                onClick={onRepeatToggle}
+                className={`transition-colors relative ${state.repeatMode !== 'OFF' ? 'text-emerald-500' : 'text-zinc-400'}`}
+              >
+                <Icon name="Repeat" size={24} />
+                {state.repeatMode === 'ONE' && (
+                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-black text-[10px] font-bold px-1 rounded-full">1</span>
+                )}
+              </button>
+            </div>
+
+            {/* Glass Visualizer */}
+            <div className="mt-auto flex items-end justify-center gap-1.5 h-24 mb-4">
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{
+                    height: state.isPlaying ? [10, Math.random() * 80 + 20, 10] : 10,
+                    opacity: state.isPlaying ? [0.3, 0.8, 0.3] : 0.2
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 0.5 + Math.random() * 0.5,
+                    ease: "easeInOut"
+                  }}
+                  className="w-2 rounded-full bg-gradient-to-t from-emerald-500/20 to-emerald-400/60 backdrop-blur-md"
+                />
+              ))}
             </div>
           </motion.div>
         )}

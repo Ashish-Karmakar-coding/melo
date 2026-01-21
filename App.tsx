@@ -16,8 +16,8 @@ const PlayerComponent = ReactPlayer as any;
 const App: React.FC = () => {
   const playerRef = useRef<any>(null);
   const skipCountRef = useRef(0);
-  
-  
+
+
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     try {
       const saved = localStorage.getItem('melodify_playlists');
@@ -26,7 +26,7 @@ const App: React.FC = () => {
       return INITIAL_PLAYLISTS;
     }
   });
-  
+
   const [currentView, setCurrentView] = useState<ViewType>('HOME');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
   const [playerState, setPlayerState] = useState<PlayerState>({
@@ -87,15 +87,27 @@ const App: React.FC = () => {
       setPlayerState(prev => ({ ...prev, isPlaying: false }));
       return;
     }
-    let nextIndex = playerState.currentSongIndex + 1;
-    if (nextIndex >= currentPlaylist.songs.length) {
-      if (playerState.repeatMode === RepeatMode.ALL) {
-        nextIndex = 0;
-      } else {
-        setPlayerState(prev => ({ ...prev, isPlaying: false }));
-        return;
+
+    let nextIndex;
+
+    if (playerState.isShuffle && currentPlaylist.songs.length > 1) {
+      // Pick a random song that isn't the current one
+      nextIndex = playerState.currentSongIndex;
+      while (nextIndex === playerState.currentSongIndex) {
+        nextIndex = Math.floor(Math.random() * currentPlaylist.songs.length);
+      }
+    } else {
+      nextIndex = playerState.currentSongIndex + 1;
+      if (nextIndex >= currentPlaylist.songs.length) {
+        if (playerState.repeatMode === RepeatMode.ALL) {
+          nextIndex = 0;
+        } else {
+          setPlayerState(prev => ({ ...prev, isPlaying: false }));
+          return;
+        }
       }
     }
+
     skipCountRef.current = 0; // Reset error counter on manual next
     setPlayerState(prev => ({ ...prev, currentSongIndex: nextIndex, progress: 0, isPlaying: true }));
     // Force play after state update
@@ -164,7 +176,7 @@ const App: React.FC = () => {
     const color1 = `hsl(${hue}, 70%, 50%)`;
     const color2 = `hsl(${(hue + 60) % 360}, 70%, 40%)`;
     const gradId = `grad-${Math.abs(hash)}`;
-    
+
     const svg = `
       <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -176,7 +188,7 @@ const App: React.FC = () => {
         <rect width="400" height="400" fill="url(#${gradId})"/>
       </svg>
     `.trim();
-    
+
     return `data:image/svg+xml;base64,${btoa(svg)}`;
   };
 
@@ -200,6 +212,12 @@ const App: React.FC = () => {
     if (playerState.currentPlaylistId === id) {
       setPlayerState(prev => ({ ...prev, isPlaying: false, currentPlaylistId: null }));
     }
+  };
+
+  const handleUpdatePlaylist = (id: string, name: string, description: string) => {
+    setPlaylists(playlists.map(p =>
+      p.id === id ? { ...p, name, description } : p
+    ));
   };
 
   const handleAddSong = (playlistId: string, song: Omit<Song, 'id' | 'dateAdded'>) => {
@@ -241,7 +259,7 @@ const App: React.FC = () => {
 
   const handleMoveSong = (fromPlaylistId: string, songId: string, toPlaylistId: string) => {
     if (fromPlaylistId === toPlaylistId) return;
-    
+
     setPlaylists(playlists.map(p => {
       if (p.id === fromPlaylistId) {
         // Remove song from source playlist
@@ -285,7 +303,7 @@ const App: React.FC = () => {
     reader.onload = (e) => {
       try {
         const parsed = JSON.parse(e.target?.result as string);
-        
+
         // Check if it's an array of playlists (all playlists export)
         if (Array.isArray(parsed)) {
           const sanitizedPlaylists: Playlist[] = parsed
@@ -298,17 +316,17 @@ const App: React.FC = () => {
                 id: song.id || `s-${Date.now()}-${index}-${songIndex}`
               }))
             }));
-          
+
           if (sanitizedPlaylists.length === 0) {
             throw new Error('No valid playlists found in file');
           }
-          
+
           setPlaylists(prev => [...prev, ...sanitizedPlaylists]);
-        } 
+        }
         // Single playlist import
         else if (parsed && parsed.name && Array.isArray(parsed.songs)) {
-          const sanitized: Playlist = { 
-            ...parsed, 
+          const sanitized: Playlist = {
+            ...parsed,
             id: `p-${Date.now()}`,
             songs: parsed.songs.map((song: Song, index: number) => ({
               ...song,
@@ -316,7 +334,7 @@ const App: React.FC = () => {
             }))
           };
           setPlaylists(prev => [...prev, sanitized]);
-        } 
+        }
         else {
           throw new Error('Invalid format');
         }
@@ -331,7 +349,7 @@ const App: React.FC = () => {
   const handlePlayerError = (error: any) => {
     const errorMsg = typeof error === 'object' ? (error.message || JSON.stringify(error)) : error;
     console.warn('Melodify Playback Warning:', errorMsg);
-    
+
     // Prevent infinite skipping if many songs fail in a row
     skipCountRef.current += 1;
     if (skipCountRef.current > 5) {
@@ -357,8 +375,8 @@ const App: React.FC = () => {
       const wasPlaying = playerState.isPlaying;
       playerRef.current.seekTo(time, 'seconds');
       // Maintain playing state after seek
-      setPlayerState(prev => ({ 
-        ...prev, 
+      setPlayerState(prev => ({
+        ...prev,
         progress: time,
         isPlaying: wasPlaying // Keep the playing state
       }));
@@ -385,15 +403,15 @@ const App: React.FC = () => {
     if (currentSong && duration > 0) {
       // Update if duration is 0 (not yet set) or if it's significantly different (more than 1 second)
       const shouldUpdate = currentSong.duration === 0 || Math.abs(currentSong.duration - duration) > 1;
-      
+
       if (shouldUpdate) {
-        setPlaylists(prevPlaylists => 
+        setPlaylists(prevPlaylists =>
           prevPlaylists.map(playlist => {
             if (playlist.id === playerState.currentPlaylistId) {
               return {
                 ...playlist,
-                songs: playlist.songs.map(song => 
-                  song.id === currentSong.id 
+                songs: playlist.songs.map(song =>
+                  song.id === currentSong.id
                     ? { ...song, duration: Math.round(duration) }
                     : song
                 )
@@ -403,6 +421,57 @@ const App: React.FC = () => {
           })
         );
       }
+    }
+  };
+
+  const handleRepeatToggle = () => {
+    setPlayerState(prev => {
+      let nextMode: RepeatMode;
+      if (prev.repeatMode === RepeatMode.OFF) nextMode = RepeatMode.ALL;
+      else if (prev.repeatMode === RepeatMode.ALL) nextMode = RepeatMode.ONE;
+      else nextMode = RepeatMode.OFF;
+      return { ...prev, repeatMode: nextMode };
+    });
+  };
+
+  const handleShuffleToggle = () => {
+    setPlayerState(prev => ({ ...prev, isShuffle: !prev.isShuffle }));
+  };
+
+  const handleCreateAndMoveSong = (songId: string, fromPlaylistId: string, newPlaylistName: string) => {
+    const fromPlaylist = playlists.find(p => p.id === fromPlaylistId);
+    const songToMove = fromPlaylist?.songs.find(s => s.id === songId);
+
+    if (!songToMove) return;
+
+    // 1. Create new playlist
+    const newPlaylistId = `p-${Date.now()}`;
+    const newPlaylist: Playlist = {
+      id: newPlaylistId,
+      name: newPlaylistName,
+      description: 'Automatically created',
+      coverUrl: generateGradientUrl(newPlaylistName + Date.now().toString()),
+      songs: [songToMove]
+    };
+
+    // 2. Update playlists: Remove from old, Add new
+    setPlaylists(prev => {
+      const updated = prev.map(p => {
+        if (p.id === fromPlaylistId) {
+          return { ...p, songs: p.songs.filter(s => s.id !== songId) };
+        }
+        return p;
+      });
+      return [...updated, newPlaylist];
+    });
+
+    // 3. Handle playback state if the moved song was playing
+    if (playerState.currentPlaylistId === fromPlaylistId && currentSong?.id === songId) {
+      setPlayerState(prev => ({
+        ...prev,
+        currentPlaylistId: newPlaylistId,
+        currentSongIndex: 0
+      }));
     }
   };
 
@@ -489,7 +558,7 @@ const App: React.FC = () => {
             },
             file: {
               forceAudio: true,
-              attributes: { 
+              attributes: {
                 preload: 'auto',
                 controls: false
               }
@@ -501,7 +570,7 @@ const App: React.FC = () => {
       {/* Main UI Layer - Must be opaque to hide the background player */}
       <div className="relative z-10 flex flex-col h-screen bg-black">
         <div className="flex flex-1 overflow-hidden relative">
-          <Sidebar 
+          <Sidebar
             currentView={currentView}
             onViewChange={setCurrentView}
             playlists={playlists}
@@ -514,7 +583,7 @@ const App: React.FC = () => {
           <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-gradient-to-b from-zinc-900 to-black">
             <AnimatePresence mode="wait">
               {currentView === 'HOME' && (
-                <HomeView 
+                <HomeView
                   key="home"
                   playlists={playlists}
                   onPlaylistClick={handlePlaylistClick}
@@ -522,7 +591,7 @@ const App: React.FC = () => {
                 />
               )}
               {currentView === 'PLAYLIST' && selectedPlaylistId && (
-                <PlaylistView 
+                <PlaylistView
                   key={selectedPlaylistId}
                   playlist={playlists.find(p => p.id === selectedPlaylistId)!}
                   isPlaying={playerState.isPlaying && playerState.currentPlaylistId === selectedPlaylistId}
@@ -532,12 +601,14 @@ const App: React.FC = () => {
                   onAddSong={(song) => handleAddSong(selectedPlaylistId, song)}
                   onDeleteSong={(songId) => handleDeleteSong(selectedPlaylistId, songId)}
                   onMoveSong={(songId, toPlaylistId) => handleMoveSong(selectedPlaylistId, songId, toPlaylistId)}
+                  onCreateAndMoveSong={handleCreateAndMoveSong}
                   onDeletePlaylist={() => handleDeletePlaylist(selectedPlaylistId)}
+                  onUpdatePlaylist={handleUpdatePlaylist}
                   onExport={() => handleExportPlaylist(playlists.find(p => p.id === selectedPlaylistId)!)}
                 />
               )}
               {currentView === 'SEARCH' && (
-                <SearchView 
+                <SearchView
                   key="search"
                   playlists={playlists}
                   onPlaylistClick={handlePlaylistClick}
@@ -547,7 +618,7 @@ const App: React.FC = () => {
           </main>
         </div>
 
-        <Player 
+        <Player
           state={playerState}
           currentSong={currentSong}
           onPlayPause={() => setPlayerState(prev => ({ ...prev, isPlaying: !prev.isPlaying }))}
@@ -555,6 +626,8 @@ const App: React.FC = () => {
           onPrev={handlePrev}
           onVolumeChange={(v) => setPlayerState(prev => ({ ...prev, volume: v }))}
           onSeek={handleSeek}
+          onRepeatToggle={handleRepeatToggle}
+          onShuffleToggle={handleShuffleToggle}
         />
       </div>
     </div>

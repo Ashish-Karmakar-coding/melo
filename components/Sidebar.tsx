@@ -13,11 +13,11 @@ interface SidebarProps {
   onExportAllPlaylists: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  currentView, 
-  onViewChange, 
-  playlists, 
-  onPlaylistClick, 
+export const Sidebar: React.FC<SidebarProps> = ({
+  currentView,
+  onViewChange,
+  playlists,
+  onPlaylistClick,
   onAddPlaylist,
   onImportPlaylist,
   onExportAllPlaylists
@@ -30,18 +30,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
             <Icon name="Music" className="text-white" size={18} />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Melodify</h1>
+          <h1 className="text-xl font-bold tracking-tight">Melo</h1>
         </div>
 
         <nav className="flex flex-col gap-4">
-          <button 
+          <button
             onClick={() => onViewChange('HOME')}
             className={`flex items-center gap-3 font-medium transition-colors ${currentView === 'HOME' ? 'text-emerald-500' : 'text-zinc-400 hover:text-white'}`}
           >
             <Icon name="Home" />
             Home
           </button>
-          <button 
+          <button
             onClick={() => onViewChange('SEARCH')}
             className={`flex items-center gap-3 font-medium transition-colors ${currentView === 'SEARCH' ? 'text-emerald-500' : 'text-zinc-400 hover:text-white'}`}
           >
@@ -54,23 +54,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center justify-between text-zinc-400 uppercase text-xs font-bold tracking-widest">
             <span>Playlists</span>
             <div className="flex gap-2">
-                <label className="cursor-pointer hover:text-white" title="Import Playlist">
-                    <Icon name="Upload" size={14} />
-                    <input type="file" className="hidden" accept=".json" onChange={onImportPlaylist} />
-                </label>
-                {playlists.length > 0 && (
-                  <button onClick={onExportAllPlaylists} className="hover:text-white" title="Download All Playlists">
-                      <Icon name="Download" size={14} />
-                  </button>
-                )}
-                <button onClick={onAddPlaylist} className="hover:text-white" title="Add Playlist">
-                    <Icon name="Plus" size={16} />
+              <label className="cursor-pointer hover:text-white" title="Import Playlist">
+                <Icon name="Upload" size={14} />
+                <input type="file" className="hidden" accept=".json" onChange={onImportPlaylist} />
+              </label>
+              {playlists.length > 0 && (
+                <button onClick={onExportAllPlaylists} className="hover:text-white" title="Download All Playlists">
+                  <Icon name="Download" size={14} />
                 </button>
+              )}
+              <button onClick={onAddPlaylist} className="hover:text-white" title="Add Playlist">
+                <Icon name="Plus" size={16} />
+              </button>
             </div>
           </div>
           <div className="flex flex-col gap-2 overflow-y-auto max-h-[400px] pr-2">
             {playlists.map(p => (
-              <button 
+              <button
                 key={p.id}
                 onClick={() => onPlaylistClick(p.id)}
                 className="text-sm text-zinc-400 hover:text-white transition-colors text-left truncate py-1"
