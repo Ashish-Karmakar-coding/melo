@@ -27,8 +27,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 glass p-6 gap-8 z-10">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-            <Icon name="Music" className="text-white" size={18} />
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+            <img src="/logo.png" className="w-full h-full object-cover" alt="Melo Logo" />
           </div>
           <h1 className="text-xl font-bold tracking-tight">Melo</h1>
         </div>
